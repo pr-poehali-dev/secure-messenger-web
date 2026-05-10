@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { User, Page } from "../App";
 import Icon from "@/components/ui/icon";
 
@@ -118,18 +118,24 @@ export default function ProfilePage({ user, setUser, setPage }: Props) {
   const [showAvatars, setShowAvatars] = useState(false);
   const [showBgPicker, setShowBgPicker] = useState(false);
   const [showCreateSticker, setShowCreateSticker] = useState(false);
-  const [stickerEmoji, setStickerEmoji] = useState("");
+  const [stickerImage, setStickerImage] = useState("");
   const [stickerName, setStickerName] = useState("");
-  const [myStickers, setMyStickers] = useState<{ emoji: string; name: string }[]>([
-    { emoji: "😎", name: "Крутой" },
-    { emoji: "🔥", name: "Огонь" },
-    { emoji: "💪", name: "Сила" },
-  ]);
+  const [myStickers, setMyStickers] = useState<{ image: string; name: string }[]>([]);
+  const stickerFileRef = useRef<HTMLInputElement>(null);
+
+  const handleStickerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setStickerImage(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const createSticker = () => {
-    if (!stickerEmoji.trim()) return;
-    setMyStickers(prev => [...prev, { emoji: stickerEmoji, name: stickerName || "Без названия" }]);
-    setStickerEmoji("");
+    if (!stickerImage || !stickerName.trim()) return;
+    setMyStickers(prev => [...prev, { image: stickerImage, name: stickerName }]);
+    setStickerImage("");
     setStickerName("");
     setShowCreateSticker(false);
   };
@@ -212,8 +218,29 @@ export default function ProfilePage({ user, setUser, setPage }: Props) {
       {/* Background picker */}
       {showBgPicker && user.isPremium && (
         <div className="mx-4 mt-3 p-4 bg-card rounded-3xl border border-border/50 shadow-lg animate-scale-in">
-          <p className="font-golos font-semibold text-diva-text text-sm mb-3">Фон профиля</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-golos font-semibold text-diva-text text-sm">Фон профиля</p>
+            {user.premiumBg && (
+              <button
+                onClick={() => { setUser({ ...user, premiumBg: "" }); setShowBgPicker(false); }}
+                className="text-xs font-golos font-medium text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors"
+              >
+                <Icon name="X" size={12} />Убрать фон
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-5 gap-2">
+            <button
+              onClick={() => { setUser({ ...user, premiumBg: "" }); setShowBgPicker(false); }}
+              className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all ${
+                !user.premiumBg ? "ring-2 ring-diva-orange" : "hover:bg-muted"
+              }`}
+            >
+              <div className="w-12 h-12 rounded-xl gradient-orange-violet flex items-center justify-center shadow-md">
+                <Icon name="Ban" size={18} className="text-white" />
+              </div>
+              <span className="text-[9px] font-golos text-diva-text-muted text-center leading-tight">Без фона</span>
+            </button>
             {PREMIUM_BG_OPTIONS.map((bg) => (
               <button
                 key={bg.id}
@@ -378,7 +405,14 @@ export default function ProfilePage({ user, setUser, setPage }: Props) {
             <span className="text-2xl">✨</span>
             <div>
               <p className="font-montserrat font-bold text-diva-text">У вас активен Diva Премиум</p>
-              <p className="text-xs text-diva-text-muted font-golos">Действует до 10 июня 2026</p>
+              <p className="text-xs text-diva-text-muted font-golos">
+                {user.premiumExpiresAt ? (() => {
+                  const d = new Date(user.premiumExpiresAt);
+                  const months = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+                  const days = Math.ceil((user.premiumExpiresAt - Date.now()) / (24 * 60 * 60 * 1000));
+                  return `Действует до ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} · осталось ${days} дн.`;
+                })() : "Активна подписка"}
+              </p>
             </div>
           </div>
         </div>
@@ -397,9 +431,14 @@ export default function ProfilePage({ user, setUser, setPage }: Props) {
             </button>
           </div>
           <div className="flex flex-wrap gap-3">
+            {myStickers.length === 0 && (
+              <p className="text-xs text-diva-text-muted font-golos py-2">У вас пока нет своих стикеров</p>
+            )}
             {myStickers.map((s, i) => (
               <div key={i} className="flex flex-col items-center gap-1">
-                <span className="sticker" style={{ width: 56, height: 56, fontSize: 30 }}>{s.emoji}</span>
+                <div className="sticker overflow-hidden p-0" style={{ width: 56, height: 56 }}>
+                  <img src={s.image} alt={s.name} className="w-full h-full object-cover rounded-full" />
+                </div>
                 <span className="text-[10px] font-golos text-diva-text-muted">{s.name}</span>
               </div>
             ))}
@@ -428,50 +467,55 @@ export default function ProfilePage({ user, setUser, setPage }: Props) {
             </div>
 
             {/* Preview */}
-            <div className="flex items-center justify-center py-4 mb-3 bg-gradient-to-br from-diva-orange/10 to-diva-violet/10 rounded-3xl">
-              {stickerEmoji ? (
-                <span className="sticker" style={{ width: 96, height: 96, fontSize: 56 }}>{stickerEmoji}</span>
+            <div className="flex items-center justify-center py-4 mb-4 bg-gradient-to-br from-diva-orange/10 to-diva-violet/10 rounded-3xl">
+              {stickerImage ? (
+                <div className="sticker overflow-hidden p-0" style={{ width: 96, height: 96 }}>
+                  <img src={stickerImage} alt="" className="w-full h-full object-cover rounded-full" />
+                </div>
               ) : (
-                <div className="w-24 h-24 rounded-full border-2 border-dashed border-border flex items-center justify-center text-diva-text-muted text-xs font-golos text-center px-2">
-                  Превью стикера
+                <div className="w-24 h-24 rounded-full border-2 border-dashed border-border flex flex-col items-center justify-center text-diva-text-muted text-xs font-golos text-center px-2 gap-1">
+                  <Icon name="Image" size={24} className="text-diva-text-muted" />
+                  Превью
                 </div>
               )}
             </div>
 
-            <p className="text-xs font-golos font-medium text-diva-text-muted uppercase tracking-wider mb-2">Выберите эмодзи</p>
-            <div className="grid grid-cols-8 gap-1.5 mb-4 max-h-32 overflow-y-auto scrollbar-thin">
-              {["😀","😂","🥰","😎","🤩","🥳","😴","🤔","🙄","😏","😭","😡","🤯","🥶","🥵","🤠","🤡","👻","💀","🤖","👽","🎃","🎉","🎁","🔥","💎","⭐","🌈","💜","💖","🚀","⚡","🦄","🐱","🐶","🦋","🌸","🍕","🍔","🎮","🎵","💪","✨","👑"].map((e) => (
-                <button
-                  key={e}
-                  onClick={() => setStickerEmoji(e)}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-xl transition-all ${
-                    stickerEmoji === e ? "ring-2 ring-diva-violet bg-diva-violet/10 scale-110" : "hover:bg-muted"
-                  }`}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-
-            <p className="text-xs font-golos font-medium text-diva-text-muted uppercase tracking-wider mb-2">Название</p>
+            <p className="text-xs font-golos font-medium text-diva-text-muted uppercase tracking-wider mb-2">Название стикера *</p>
             <input
               value={stickerName}
               onChange={(e) => setStickerName(e.target.value)}
               placeholder="Например: Огонь"
               maxLength={20}
+              autoFocus
               className="w-full px-4 py-3 bg-muted/60 rounded-2xl text-sm font-golos text-diva-text placeholder:text-diva-text-muted/60 border border-border/50 focus:outline-none focus:ring-2 focus:ring-diva-violet/40 mb-4"
+            />
+
+            <p className="text-xs font-golos font-medium text-diva-text-muted uppercase tracking-wider mb-2">Изображение из галереи *</p>
+            <button
+              onClick={() => stickerFileRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-4 bg-muted/60 rounded-2xl border-2 border-dashed border-border hover:border-diva-violet hover:bg-diva-violet/5 transition-all text-sm font-golos font-medium text-diva-text"
+            >
+              <Icon name="Image" size={16} className="text-diva-violet" />
+              {stickerImage ? "Изменить изображение" : "Выбрать из галереи"}
+            </button>
+            <input
+              ref={stickerFileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleStickerUpload}
+              className="hidden"
             />
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowCreateSticker(false)}
+                onClick={() => { setShowCreateSticker(false); setStickerImage(""); setStickerName(""); }}
                 className="flex-1 py-3 rounded-2xl border border-border text-diva-text-muted font-golos text-sm"
               >
                 Отмена
               </button>
               <button
                 onClick={createSticker}
-                disabled={!stickerEmoji}
+                disabled={!stickerImage || !stickerName.trim()}
                 className="flex-1 py-3 rounded-2xl gradient-orange-violet text-white font-golos font-semibold text-sm shadow-lg disabled:opacity-50"
               >
                 Создать стикер

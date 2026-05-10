@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AuthPage from "./pages/AuthPage";
 import ChatsPage from "./pages/ChatsPage";
 import ContactsPage from "./pages/ContactsPage";
@@ -17,6 +17,7 @@ export interface User {
   avatar: string;
   isPremium: boolean;
   premiumBg: string;
+  premiumExpiresAt: number | null;
 }
 
 const defaultUser: User = {
@@ -27,6 +28,7 @@ const defaultUser: User = {
   avatar: "🦋",
   isPremium: false,
   premiumBg: "",
+  premiumExpiresAt: null,
 };
 
 export default function App() {
@@ -34,6 +36,18 @@ export default function App() {
   const [page, setPage] = useState<Page>("chats");
   const [theme, setTheme] = useState<Theme>("light");
   const [user, setUser] = useState<User>(defaultUser);
+
+  // Auto-expire premium after 1 month
+  useEffect(() => {
+    const checkExpiry = () => {
+      if (user.isPremium && user.premiumExpiresAt && Date.now() >= user.premiumExpiresAt) {
+        setUser(u => ({ ...u, isPremium: false, premiumBg: "", premiumExpiresAt: null }));
+      }
+    };
+    checkExpiry();
+    const interval = setInterval(checkExpiry, 60000);
+    return () => clearInterval(interval);
+  }, [user.isPremium, user.premiumExpiresAt]);
 
   const toggleTheme = () => {
     const next = theme === "light" ? "dark" : "light";

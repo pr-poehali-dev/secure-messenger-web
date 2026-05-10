@@ -7,22 +7,23 @@ interface Props {
   setPage: (p: Page) => void;
 }
 
-const MOCK_CONTACTS = [
-  { id: 1, name: "Мария Иванова", avatar: "🌸", phone: "+7 900 111-22-33", online: true },
-  { id: 2, name: "Дмитрий Смирнов", avatar: "🦊", phone: "+7 900 444-55-66", online: true },
-  { id: 3, name: "Анастасия Белова", avatar: "🌺", phone: "+7 900 777-88-99", online: false },
-  { id: 4, name: "Игорь Петров", avatar: "🐻", phone: "+7 900 000-11-22", online: false },
-  { id: 5, name: "Екатерина Новикова", avatar: "🦁", phone: "+7 900 333-44-55", online: true },
-  { id: 6, name: "Андрей Козлов", avatar: "🐺", phone: "+7 900 666-77-88", online: false },
-];
+interface Contact {
+  id: number;
+  name: string;
+  avatar: string;
+  phone: string;
+  online: boolean;
+}
+
+const INITIAL_CONTACTS: Contact[] = [];
 
 export default function ContactsPage({ user, setPage }: Props) {
-  const [contacts, setContacts] = useState(MOCK_CONTACTS);
+  const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [addMethod, setAddMethod] = useState<"email" | "phone">("phone");
   const [addValue, setAddValue] = useState("");
-  const [showCall, setShowCall] = useState<(typeof MOCK_CONTACTS)[0] | null>(null);
+  const [showCall, setShowCall] = useState<Contact | null>(null);
   const [calling, setCalling] = useState(false);
 
   const filtered = contacts.filter(c =>
@@ -43,7 +44,7 @@ export default function ContactsPage({ user, setPage }: Props) {
     setShowAdd(false);
   };
 
-  const startCall = (contact: (typeof MOCK_CONTACTS)[0]) => {
+  const startCall = (contact: Contact) => {
     setShowCall(contact);
     setCalling(true);
     setTimeout(() => setCalling(false), 3000);
@@ -154,9 +155,24 @@ export default function ContactsPage({ user, setPage }: Props) {
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="px-4 py-3">
           <p className="text-xs text-diva-text-muted font-golos font-medium uppercase tracking-wider mb-2">
-            {filtered.length} контактов
+            {filtered.length} {filtered.length === 1 ? "контакт" : "контактов"}
           </p>
         </div>
+        {contacts.length === 0 && (
+          <div className="text-center py-12 px-6 animate-fade-in">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-diva-orange/10 to-diva-violet/10 flex items-center justify-center mx-auto mb-4">
+              <Icon name="Users" size={36} className="text-diva-violet" />
+            </div>
+            <p className="font-montserrat font-bold text-diva-text mb-1">Список пуст</p>
+            <p className="text-sm text-diva-text-muted font-golos mb-4">Добавьте первый контакт по номеру телефона или email</p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-5 py-2.5 rounded-2xl gradient-orange-violet text-white font-golos font-semibold text-sm shadow-lg hover:opacity-90 transition-all"
+            >
+              Добавить контакт
+            </button>
+          </div>
+        )}
         {filtered.map((contact, i) => (
           <div
             key={contact.id}

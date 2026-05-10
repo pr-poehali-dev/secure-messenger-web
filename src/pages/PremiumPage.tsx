@@ -36,12 +36,19 @@ export default function PremiumPage({ user, setUser, setPage }: Props) {
   const [paying, setPaying] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const formatExpiryDate = (ts: number) => {
+    const d = new Date(ts);
+    const months = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
   const handlePay = () => {
     setPaying(true);
     setTimeout(() => {
       setPaying(false);
       setSuccess(true);
-      setUser({ ...user, isPremium: true });
+      const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      setUser({ ...user, isPremium: true, premiumExpiresAt: expiresAt });
     }, 2500);
   };
 
@@ -59,7 +66,7 @@ export default function PremiumPage({ user, setUser, setPage }: Props) {
           </p>
           <div className="flex items-center justify-center gap-1 bg-yellow-400/20 text-yellow-700 dark:text-yellow-400 px-4 py-2 rounded-full text-sm font-golos font-medium mb-6">
             <span>✔</span>
-            <span>Активно до 10 июня 2026</span>
+            <span>Активно до {user.premiumExpiresAt ? formatExpiryDate(user.premiumExpiresAt) : "—"}</span>
           </div>
           <button
             onClick={() => setPage("profile")}
@@ -190,7 +197,14 @@ export default function PremiumPage({ user, setUser, setPage }: Props) {
           <div className="bg-gradient-to-br from-yellow-400/20 to-orange-400/20 border border-yellow-400/30 rounded-3xl p-5 text-center">
             <span className="text-4xl block mb-2">✨</span>
             <p className="font-montserrat font-bold text-diva-text text-lg">Премиум активен!</p>
-            <p className="text-xs text-diva-text-muted font-golos mt-1">Действует до 10 июня 2026</p>
+            <p className="text-xs text-diva-text-muted font-golos mt-1">
+              Действует до {user.premiumExpiresAt ? formatExpiryDate(user.premiumExpiresAt) : "—"}
+            </p>
+            {user.premiumExpiresAt && (
+              <p className="text-xs text-diva-text-muted font-golos mt-0.5">
+                Осталось дней: {Math.ceil((user.premiumExpiresAt - Date.now()) / (24 * 60 * 60 * 1000))}
+              </p>
+            )}
             <button
               onClick={() => setPage("profile")}
               className="mt-4 px-6 py-2.5 gradient-orange-violet text-white rounded-2xl text-sm font-golos font-semibold shadow-lg hover:opacity-90 transition-all"
