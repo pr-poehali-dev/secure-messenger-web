@@ -7,8 +7,17 @@ interface Props {
   setPage: (p: Page) => void;
 }
 
-const STICKERS = ["😂", "❤️", "🔥", "👍", "🦋", "✨", "🎉", "😎", "🥰", "😭", "💀", "🫡", "🤙", "💫", "🌈"];
-const GIFS = ["🎬", "📽️", "🎞️", "🎭", "🎪"];
+const STICKERS = ["😂", "❤️", "🔥", "👍", "🦋", "✨", "🎉", "😎", "🥰", "😭", "💀", "🫡", "🤙", "💫", "🌈", "🎁", "🍕", "⭐", "🎮", "🦄"];
+const GIFS = [
+  { emoji: "🕺", anim: "gif-bounce", label: "танец" },
+  { emoji: "💃", anim: "gif-shake", label: "вечеринка" },
+  { emoji: "🎉", anim: "gif-pulse", label: "ура" },
+  { emoji: "🚀", anim: "gif-float", label: "поехали" },
+  { emoji: "🌈", anim: "gif-rainbow", label: "радуга" },
+  { emoji: "💖", anim: "gif-pulse", label: "сердце" },
+  { emoji: "🔥", anim: "gif-shake", label: "огонь" },
+  { emoji: "⚡", anim: "gif-spin", label: "молния" },
+];
 
 const MOCK_CHATS = [
   { id: 1, name: "Мария Иванова", avatar: "🌸", lastMsg: "Привет! Как дела?", time: "14:32", unread: 3, online: true },
@@ -19,12 +28,22 @@ const MOCK_CHATS = [
   { id: 6, name: "Разработчики", avatar: "💻", lastMsg: "Баг пофиксили", time: "Вчера", unread: 0, online: false, isGroup: true },
 ];
 
-const MOCK_MESSAGES = [
-  { id: 1, text: "Привет! Как дела?", out: false, time: "14:30", read: true },
-  { id: 2, text: "Всё отлично! Работаю над новым проектом 🚀", out: true, time: "14:31", read: true },
-  { id: 3, text: "Классно! Что за проект?", out: false, time: "14:31", read: true },
-  { id: 4, text: "Мессенджер с E2E шифрованием. Называется Web-Diva 🦋", out: true, time: "14:32", read: true },
-  { id: 5, text: "Звучит круто! Покажешь потом?", out: false, time: "14:32", read: false },
+interface Message {
+  id: number;
+  text: string;
+  out: boolean;
+  time: string;
+  read: boolean;
+  type?: "text" | "sticker" | "gif";
+  anim?: string;
+}
+
+const MOCK_MESSAGES: Message[] = [
+  { id: 1, text: "Привет! Как дела?", out: false, time: "14:30", read: true, type: "text" },
+  { id: 2, text: "Всё отлично! Работаю над новым проектом 🚀", out: true, time: "14:31", read: true, type: "text" },
+  { id: 3, text: "Классно! Что за проект?", out: false, time: "14:31", read: true, type: "text" },
+  { id: 4, text: "🦋", out: true, time: "14:32", read: true, type: "sticker" },
+  { id: 5, text: "🎉", out: false, time: "14:32", read: false, type: "gif", anim: "gif-pulse" },
 ];
 
 export default function ChatsPage({ user, setPage }: Props) {
@@ -41,7 +60,7 @@ export default function ChatsPage({ user, setPage }: Props) {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const sendMessage = (text: string) => {
+  const sendMessage = (text: string, type: "text" | "sticker" | "gif" = "text", anim?: string) => {
     if (!text.trim()) return;
     setMessages(prev => [...prev, {
       id: Date.now(),
@@ -49,6 +68,8 @@ export default function ChatsPage({ user, setPage }: Props) {
       out: true,
       time: new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" }),
       read: false,
+      type,
+      anim,
     }]);
     setInput("");
     setShowStickers(false);
@@ -99,39 +120,69 @@ export default function ChatsPage({ user, setPage }: Props) {
         <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2 scrollbar-thin">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.out ? "justify-end" : "justify-start"} animate-fade-in`}>
-              <div
-                className={`max-w-[75%] px-4 py-2.5 ${
-                  msg.out
-                    ? "gradient-orange-violet text-white msg-bubble-out"
-                    : "bg-card border border-border/50 text-diva-text msg-bubble-in"
-                } shadow-sm`}
-              >
-                <p className="text-sm font-golos leading-relaxed">{msg.text}</p>
-                <div className={`flex items-center gap-1 justify-end mt-1 ${msg.out ? "text-white/60" : "text-diva-text-muted"}`}>
-                  <span className="text-[10px] font-golos">{msg.time}</span>
-                  {msg.out && <Icon name={msg.read ? "CheckCheck" : "Check"} size={11} />}
+              {msg.type === "sticker" ? (
+                <div className="flex flex-col items-end gap-1">
+                  <span className="sticker-msg">{msg.text}</span>
+                  <div className={`flex items-center gap-1 ${msg.out ? "text-diva-text-muted" : "text-diva-text-muted"}`}>
+                    <span className="text-[10px] font-golos">{msg.time}</span>
+                    {msg.out && <Icon name={msg.read ? "CheckCheck" : "Check"} size={11} />}
+                  </div>
                 </div>
-              </div>
+              ) : msg.type === "gif" ? (
+                <div className="flex flex-col items-end gap-1">
+                  <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-diva-orange/15 to-diva-violet/15 border border-border/50 flex items-center justify-center shadow-md overflow-hidden">
+                    <span className={`text-6xl ${msg.anim || "gif-bounce"}`}>{msg.text}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-diva-text-muted">
+                    <span className="text-[10px] font-golos">GIF · {msg.time}</span>
+                    {msg.out && <Icon name={msg.read ? "CheckCheck" : "Check"} size={11} />}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`max-w-[75%] px-4 py-2.5 ${
+                    msg.out
+                      ? "gradient-orange-violet text-white msg-bubble-out"
+                      : "bg-card border border-border/50 text-diva-text msg-bubble-in"
+                  } shadow-sm`}
+                >
+                  <p className="text-sm font-golos leading-relaxed">{msg.text}</p>
+                  <div className={`flex items-center gap-1 justify-end mt-1 ${msg.out ? "text-white/60" : "text-diva-text-muted"}`}>
+                    <span className="text-[10px] font-golos">{msg.time}</span>
+                    {msg.out && <Icon name={msg.read ? "CheckCheck" : "Check"} size={11} />}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
         {/* Stickers panel */}
         {showStickers && (
-          <div className="glass dark:glass-dark border-t border-border/50 p-3 animate-slide-up">
-            <p className="text-xs text-diva-text-muted font-golos mb-2">Стикеры</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="glass dark:glass-dark border-t border-border/50 p-4 animate-slide-up max-h-[50vh] overflow-y-auto scrollbar-thin">
+            <p className="text-xs text-diva-text-muted font-golos font-medium uppercase tracking-wider mb-3">Стикеры</p>
+            <div className="flex flex-wrap gap-3">
               {STICKERS.map((s, i) => (
-                <button key={i} onClick={() => sendMessage(s)} className="text-2xl hover:scale-125 transition-transform">
+                <button
+                  key={i}
+                  onClick={() => sendMessage(s, "sticker")}
+                  className="sticker"
+                  style={{ animationDelay: `${i * 0.02}s` }}
+                >
                   {s}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-diva-text-muted font-golos mt-3 mb-2">Гифки</p>
-            <div className="flex gap-3">
+            <p className="text-xs text-diva-text-muted font-golos font-medium uppercase tracking-wider mt-5 mb-3">Анимированные гифки</p>
+            <div className="grid grid-cols-4 gap-2">
               {GIFS.map((g, i) => (
-                <button key={i} onClick={() => sendMessage(g)} className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center text-2xl hover:scale-110 transition-transform">
-                  {g}
+                <button
+                  key={i}
+                  onClick={() => sendMessage(g.emoji, "gif", g.anim)}
+                  className="aspect-square bg-gradient-to-br from-diva-orange/10 to-diva-violet/10 border border-border/50 rounded-2xl flex flex-col items-center justify-center gap-1 hover:scale-105 transition-transform shadow-sm"
+                >
+                  <span className={`text-3xl ${g.anim}`}>{g.emoji}</span>
+                  <span className="text-[9px] font-golos text-diva-text-muted uppercase">{g.label}</span>
                 </button>
               ))}
             </div>

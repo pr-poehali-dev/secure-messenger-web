@@ -268,3 +268,125 @@
     transform: scale(0.8);
   }
 }
+
+/* GIF animations */
+@keyframes gifBounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(8deg);
+  }
+}
+@keyframes gifSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes gifShake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  25% {
+    transform: translateX(-3px) rotate(-8deg);
+  }
+  75% {
+    transform: translateX(3px) rotate(8deg);
+  }
+}
+@keyframes gifPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: scale(1.15);
+    filter: hue-rotate(45deg);
+  }
+}
+@keyframes gifFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  33% {
+    transform: translateY(-6px) scale(1.05);
+  }
+  66% {
+    transform: translateY(4px) scale(0.95);
+  }
+}
+@keyframes gifRainbow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.gif-bounce {
+  animation: gifBounce 0.8s ease-in-out infinite;
+  display: inline-block;
+}
+.gif-spin {
+  animation: gifSpin 2s linear infinite;
+  display: inline-block;
+}
+.gif-shake {
+  animation: gifShake 0.5s ease-in-out infinite;
+  display: inline-block;
+}
+.gif-pulse {
+  animation: gifPulse 1.2s ease-in-out infinite;
+  display: inline-block;
+}
+.gif-float {
+  animation: gifFloat 2s ease-in-out infinite;
+  display: inline-block;
+}
+.gif-rainbow {
+  animation: gifRainbow 3s linear infinite;
+  display: inline-block;
+}
+
+/* Sticker style — true sticker look */
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  line-height: 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.3) 70%
+  );
+  border: 3px solid white;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.2),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.1),
+    inset 0 3px 6px rgba(255, 255, 255, 0.6);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.sticker:hover {
+  transform: scale(1.18) rotate(-6deg);
+}
+.sticker-msg {
+  font-size: 72px;
+  line-height: 1;
+  filter: drop-shadow(0 0 1.5px white) drop-shadow(0 0 1.5px white)
+    drop-shadow(0 0 1.5px white) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3));
+  display: inline-block;
+}
